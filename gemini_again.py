@@ -6,8 +6,12 @@ from PIL.ExifTags import TAGS
 from PIL import Image
 
 df = pd.DataFrame(columns=["Image", "Folder address", "Coordinates"])
-
-
+row = 0
+lat = []
+lat_ref = []
+lon = []
+lon_ref = []
+# Open the image file
 def read_data(image):
     image = Image.open(image)
 
@@ -43,8 +47,8 @@ def read_data(image):
         geo_coordinate = "{0}° {1}, {2}° {3}".format(lat, lat_ref, lon, lon_ref)
     else:
         print("No GPS information found.")
-    return lat, lat_ref, lon, lon
-
+        geo_coordinate = "{0}° {1}, {2}° {3}".format('0', '0','0','0')
+    return geo_coordinate
 def select_folder():
     """Selects a folder using a file dialog, adds image paths to a DataFrame,
        and saves the DataFrame as a CSV file in the same directory."""
@@ -59,26 +63,22 @@ def select_folder():
         for index, filename in enumerate(os.listdir(folder_path)):
             if filename.lower().endswith(('.jpg', '.jpeg', '.png')):  # Adjust file extensions as needed
                 image_path = os.path.join(folder_path, filename)
-                lat, lat_ref, lon, lon_ref = read_data(image_path)
-                # Combine calls and format coordinates
+                read_data(image_path)
                 df.at[index, 'Image'] = filename
                 df.at[index, 'Folder address'] = image_path
-                df.at[index, 'Coordinates'] = f"{lat:.2f}° {lat_ref}, {lon:.2f}° {lon_ref}"
-        return folder_path
+                geo_cordinate = read_data(image_path)
+                df.at[index, 'Coordinates'] = geo_cordinate
         print("Folder path", folder_path)
+        return folder_path
 
-    #root.mainloop()  # Keep the GUI window open
-
-
-# Call the function to select a folder
 folder_path = select_folder()
+# Save the CSV file
 
-# Save the CSV file (assuming the folder was selected)
-if not df.empty:  # Check if DataFrame has any data
-    csv_file_path = os.path.join(folder_path, "data.csv")  # Use join for path construction
-    df.to_csv(csv_file_path, sep=',')
-    print("Data saved to CSV file")
-else:
-    print("No images found in the selected folder")
+csv_file_path = folder_path + "/data.csv"  # Use forward slash for path separators
+df.to_csv(csv_file_path, sep=',')
 
-print("Finished")
+# Save the TXT file (optional)
+txt_file_path = folder_path + "/data.txt"
+df.to_csv(txt_file_path, sep=',', index=False)  # Remove index for TXT format
+
+print("We have finished")
